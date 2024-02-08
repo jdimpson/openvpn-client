@@ -36,8 +36,8 @@ docker run -it --rm --name="openvpn-client" --cap-add=NET_ADMIN --device=/dev/ne
     - So you could set it as a route (default or otherwise) for other physical devices on your LAN and use your VPNs in the manner they are generally intended for.
     
 ## Requirements
-- Your container needs the NET_ADMIN capability, e.g. --cap-add=NET_ADMIN
-- And it needs access to the tun device, e.g. --device=/dev/net/tun:/dev/net/tun
+- Your container needs the NET_ADMIN capability, e.g. `--cap-add=NET_ADMIN`
+- And it needs access to the tun device, e.g. `--device=/dev/net/tun:/dev/net/tun`
 - There are some limitations when running OpenVPN in a container. So there are overriding OpenVPN configuration parameters in `/overrides.ovpn`. The principle restriction one is that I haven't figured out how to support IPv6 yet.
 
 ## Building
