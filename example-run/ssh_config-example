@@ -1,0 +1,6 @@
+# add this to you ~/.ssh/config to any system in your $LOCALSUBNET. Change "dockerhost" to the
+# name of IP address of your container host running openvpn-client image. Now your 
+# SSH session will go through the VPN
+host *
+	ProxyCommand nc -X connect -x dockerhost:8888 %h %p
+
