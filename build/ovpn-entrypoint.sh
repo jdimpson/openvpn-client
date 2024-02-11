@@ -23,6 +23,7 @@ fi
 
 GW=$(ip route | sed -ne '/default/{s/default via \([^ ][^ ]* dev [^ ]*\).*/\1/; p}');
 
+ROUTING=
 if test -z "$LOCALSUBNET"; then
 	echo "You should set LOCALSUBNET if you want to connect to the proxy or enable NAT routing";
 else
@@ -30,6 +31,7 @@ else
 	if ip route add $LOCALSUBNET via $GW; then
 		echo "You can connect to dockerhost:8888 for HTTP_PROXY access (or whichever port you forwarded)" >&2;
 	else
+		ROUTING=1;
 		echo "Detected that we are bridged to local subnet. Enabling NAT routing for $LOCALSUBNET" >&2;
 		# NOTE: for this to work the container needs to be bridged to the physical network, e.g. via macvlan.
 		iptables -A FORWARD -i $ETH0 -o $TUN0 -m state --state RELATED,ESTABLISHED -j ACCEPT
@@ -67,8 +69,9 @@ fi
 
 ( sleep 30; while true; do \
 	date; \
-	IP=$(ip addr show $ETH0 | awk '/inet / {print $2}'); \
-	echo "Connect to $IP:8888 for HTTP_PROXY access and use $IP as a routed gateway."; \
+	IP=$(ip addr show $ETH0 | awk '/inet / {print $2}' | sed -e 's#/.*##'); \
+	test -z "$ROUTING" || echo "export https_proxy=$IP:8888 for proxy access and use $IP as a routed gateway."; \
+	test -z "$ROUTING" && echo "Forward a port from container host to $IP:8888 for proxy access."; \
 	wget -q https://ipinfo.io/ -O- ; echo; \
 	sleep 3600; done ) &
 
