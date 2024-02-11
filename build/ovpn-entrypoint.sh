@@ -14,26 +14,30 @@ echo "Setting name server to $NAMESERVER";
 rm /etc/resolv.conf
 echo "nameserver $NAMESERVER" > /etc/resolv.conf
 
-#GW=$(ip route | sed -ne '/default/{s/default via \([^ ][^ ]*\) .*/\1/; p}')
+if ip link add dummy0 type dummy; then
+	ip link delete dummy0;
+else
+	echo "Make sure you give this container NET_ADMIN capability" >&2;
+	exit 4;
+fi
+
 GW=$(ip route | sed -ne '/default/{s/default via \([^ ][^ ]* dev [^ ]*\).*/\1/; p}');
 
 if test -z "$LOCALSUBNET"; then
 	echo "You should set LOCALSUBNET if you want to connect to the proxy or enable NAT routing";
 else
 	echo "LOCALSUBNET is $LOCALSUBNET via $GW";
-	ip route add $LOCALSUBNET via $GW
-
-	echo "Enabling NAT routing back to $LOCALSUBNET";
-	# NOTE: for this to work, the container needs to be bridged to the physical network, e.g. via macvlan.
-	# should we try to detect if that's the case? we could compare values of $LOCALSUBNET and $GW
-	# also if it is the case, the addition of the static route to $LOCALSUBNET above is probably unnecessary
-	iptables -A FORWARD -i $ETH0 -o $TUN0 -m state --state RELATED,ESTABLISHED -j ACCEPT
-	iptables -A FORWARD -i $TUN0 -o $ETH0 -m state --state RELATED,ESTABLISHED -j ACCEPT
-	iptables -A FORWARD -i $ETH0 -o $TUN0 -s $LOCALSUBNET -d 0.0.0.0/0 -j ACCEPT
-	iptables -t nat -A POSTROUTING -o $TUN0 -j MASQUERADE
+	if ip route add $LOCALSUBNET via $GW; then
+		echo "You can connect to dockerhost:8888 for HTTP_PROXY access (or whichever port you forwarded)" >&2;
+	else
+		echo "Detected that we are bridged to local subnet. Enabling NAT routing for $LOCALSUBNET" >&2;
+		# NOTE: for this to work the container needs to be bridged to the physical network, e.g. via macvlan.
+		iptables -A FORWARD -i $ETH0 -o $TUN0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+		iptables -A FORWARD -i $TUN0 -o $ETH0 -m state --state RELATED,ESTABLISHED -j ACCEPT
+		iptables -A FORWARD -i $ETH0 -o $TUN0 -s $LOCALSUBNET -d 0.0.0.0/0 -j ACCEPT
+		iptables -t nat -A POSTROUTING -o $TUN0 -j MASQUERADE
+	fi
 fi
-
-echo "Make sure you give this container NET_ADMIN capability";
 
 if ! test -e /dev/net/tun; then
 	echo "Can't find /dev/net/tun, please map it in as a device" >&2;
@@ -61,7 +65,12 @@ else
 	echo "Tinyproxy not installed, skipping" >&2;
 fi
 
-( sleep 30; while true; do date; wget -q https://ipinfo.io/ -O- ; echo; sleep 3600; done ) &
+( sleep 30; while true; do \
+	date; \
+	IP=$(ip addr show $ETH0 | awk '/inet / {print $2}'); \
+	echo "Connect to $IP:8888 for HTTP_PROXY access and use $IP as a routed gateway."; \
+	wget -q https://ipinfo.io/ -O- ; echo; \
+	sleep 3600; done ) &
 
 exec openvpn --config "$CLIENT" --config "$OVERRIDES";
 
