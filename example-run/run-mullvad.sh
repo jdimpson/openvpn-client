@@ -2,9 +2,10 @@
 
 # usage: ./run_mullvad.sh [two letter country code]  [listen port to forward to the proxy[
 
-# to use this, you need to download your own mullvad openvpn config files, unzip them, into the 
-# same folder as you run this script in. You may need to modify them to use fully qualified 
-# file names as they appear in the running container (e.g. in /etc/openvpn)
+# to use this, you need to download your own mullvad openvpn config files, 
+# unzip them, into the same folder as you run this script in. You may need 
+# to modify them to use fully qualified file names as they appear in the 
+# running container (e.g. in /etc/openvpn)
  
 MVGW=au
 LPORT=8888
