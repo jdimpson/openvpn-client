@@ -11,6 +11,8 @@ docker run -it --rm --name="openvpn-client" --cap-add=NET_ADMIN --device=/dev/ne
 ```
 (Hopefully I've figured out how to upload a container to docker hub or ghcr by the time you read this. If not, building it youself doesn't require anything more than a docker installation.)
 
+There are other examples in the [example-run](example-run) folder.
+
 
 ## Functions supported
 - [OpenVPN](https://openvpn.net/) client
