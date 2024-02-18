@@ -1,7 +1,7 @@
 FROM alpine:latest
 ENV LOCALSUBNET= \
     OVPNCLIENT=
-RUN apk add openvpn && apk add tinyproxy && sed -e '/^Allow/ s/^/#/' -i /etc/tinyproxy/tinyproxy.conf && apk add curl iptables speedtest-cli tcpdump iperf-ng
+RUN apk add --update openvpn && apk add tinyproxy && sed -e '/^Allow/ s/^/#/' -i /etc/tinyproxy/tinyproxy.conf && apk add curl iptables speedtest-cli tcpdump
 COPY ovpn-entrypoint.sh /ovpn-entrypoint.sh
 RUN chmod a+x /ovpn-entrypoint.sh
 COPY overrides.ovpn /overrides.ovpn
