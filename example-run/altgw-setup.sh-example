@@ -1,0 +1,29 @@
+#!/bin/sh
+set -e
+
+if ! mount | grep -q 'type cgroup2'; then
+	echo "This script relies on cgroup2 kernel support. You either don't have it loaded, or have cgroup1" >&2;
+	echo "See https://gist.github.com/kriswebdev/a8d291936fe4299fb17d3744497b1170 (from which I based this script) for a more fully-featured and robust version of this script." >&2;
+	exit 1;
+fi
+
+DEV=ens18
+FWMARK=11;
+TABLE="altgw";
+GROUP=$(id -g -n $USER)
+ALTGWIP=192.168.1.5
+
+
+sudo mkdir -p /sys/fs/cgroup/$TABLE
+sudo chown -R $USER:$GROUP /sys/fs/cgroup/$TABLE
+echo "$FWMARK $TABLE" | sudo tee /etc/iproute2/rt_tables.d/$TABLE-route.conf > /dev/null
+sudo ip rule add fwmark $FWMARK table $TABLE
+sudo ip route add default via $ALTGWIP dev $DEV table $TABLE
+echo 2 | sudo tee /proc/sys/net/ipv4/conf/all/rp_filter > /dev/null;
+echo 2 | sudo tee /proc/sys/net/ipv4/conf/$DEV/rp_filter > /dev/null;
+sudo iptables -t mangle -A OUTPUT -m cgroup --path $TABLE -j MARK --set-mark $FWMARK;
+sudo iptables -t nat -A POSTROUTING -m cgroup --path $TABLE -o $DEV -j MASQUERADE;
+ip route show table $TABLE;
+traceroute -n 8.8.8.8
+echo $$ | sudo tee /sys/fs/cgroup/$TABLE/cgroup.procs 
+traceroute -n 8.8.8.8
