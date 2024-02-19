@@ -67,6 +67,8 @@ else
 	echo "Tinyproxy not installed, skipping" >&2;
 fi
 
+# https://api.myip.com/
+# https://ipinfo.io
 ( sleep 30; while true; do \
 	date; \
 	IP=$(ip addr show $ETH0 | awk '/inet / {print $2}' | sed -e 's#/.*##'); \
