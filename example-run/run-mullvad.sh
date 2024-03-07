@@ -34,6 +34,7 @@ docker run -it --rm \
 	--mount type=bind,source="$(pwd)/",target="/etc/openvpn/" \
 	-e OVPNCLIENT="$CLIENT" \
 	-e LOCALSUBNET="$LOCALSUBNET" \
+	-e RATE="5mbit" \
 	-p "$LPORT:8888/tcp" \
 	jdimpson/openvpn-client:latest
 
