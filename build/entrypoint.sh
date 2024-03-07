@@ -56,8 +56,13 @@ if ! test -r "$CLIENT"; then
 fi
 
 if ! test -r "$OVERRIDES"; then 
-	echo "Can't find override config file $OVERRIDES";
+	echo "Can't find override config file $OVERRIDES" >&2;
 	exit 4;
+fi
+
+if ! test -z "$RATE"; then
+	echo "Setting up rate limit using rate $RATE" >&2;
+	( sleep 10 ; /tc.sh "$RATE"; ) &
 fi
 
 if test -x /usr/bin/tinyproxy; then
