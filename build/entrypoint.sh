@@ -61,8 +61,7 @@ if ! test -r "$OVERRIDES"; then
 fi
 
 if ! test -z "$RATE"; then
-	echo "Setting up rate limit using rate $RATE" >&2;
-	( sleep 10 ; /tc.sh "$RATE"; ) &
+	( sleep 10; echo "Setting up rate limit using rate $RATE" >&2; /tc.sh "$RATE"; ) &
 fi
 
 if test -x /usr/bin/tinyproxy; then
