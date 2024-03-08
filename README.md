@@ -21,21 +21,34 @@ There are other examples in the [example-run](example-run) folder.
     - But if your OpenVPN client config consists of more than a single file, you should do something like this: `--mount type=bind,source="$(pwd)/",target="/etc/openvpn/"`
     - And either make sure your client config file is called `/etc/openvpn/client.ovpn`
     - Or set environment variable `OVPNCLIENT` to whatever file you is your client config, e.g. `-e OVPNCLIENT=/etc/openvpn/my_config.ovpn`
+    - See [run.sh](example-run/run.sh) as an example of basic usage.
 - [tinyproxy](http://tinyproxy.github.io/) HTTP proxy
     - Listening on internal port 8888, mappable to any port on the container host, e.g. `-p 9999:8888/tcp`
     - Set environmental varable `LOCALSUBNET` to the LAN subnet where you container host is running, so that the proxy can talk to other devices on your local LAN, e.g. `-e LOCALSUBNET=192.168.68.0/24`
     - Then on any device on your local LAN, set the appropriate `https_proxy` environment variable or web browser proxy setting to `http://<your docker host name or IP>:8888/` (or whatever port you mapped to 8888 of the container)
     - e.g. `http_proxy=http://<docker host name or ip>:8888/ curl http://ipinfo.io/`
+    - See [http_proxy.sh-example](example-run/http_proxy.sh-example) as an example of how to set environment variables to use the proxy.
 - Use as a routable gateway for other containers 
     - Make sure you give your running OpenVPN client container instance a name, e.g. `--name=openvpn`
     - Then start another container, using `--network=container:openvpn` to connect their network namespaces together. The secondary container(s) will use the routing table of the `openvpn` container, as managed by OpenVPN client.
     - Or `network_mode=service:openvpn` or `network_mode=container:openvpn` if you are using docker compose.
 - Provide VPNed command line webclients
-    - Connect into the running container to run `wget` or `curl`
+    - Connect into the running container to run `wget`, `curl`, `tcpdump`, or `speedtest-cli`
     - e.g. on your docker host, run `docker exec -it openvpn curl https://ipinfo.io/`
 - Use as a routable gateway for devices on your LAN!!!1
-    - *COMING SOON (MAYBE)*
     - So you could set it as a route (default or otherwise) for other physical devices on your LAN and use your VPNs in the manner they are generally intended for.
+    - Two ways:
+        - See [run-host.sh](examples-run/run-host.sh) for how to cause your docker host to have its default route changed so that all traffic goes over the VPN
+            - (almost certainly not what you want if there are many users and/or many different services on your docker host, but useful if your docker host is intended to only be a router or some other other kind of network appliance)
+        - See [run-macvlan.sh](examples-run/run-macvlan.sh) for how to make your Openvpn-client container have it's own IP address on your local network, suitable to treat as a router. Trivially easy to convert to use layer 2 ipvlan rather than macvlan.
+    - And once you container has become a valid router on your network, you have to point other systems at is as a route. 
+        - You can manually change their default gateway or add new static route(s) 
+        - or on Linux systems, you can create an alternate gateway routing table that will only be applied to selected process. 
+            - Run [altgw-setup.sh-example](example-run/altgw-setup.sh-example), then
+            - Write the process ID of the program to `/sys/fs/cgroup/altgw/cgroup.procs` 
+            - The easiest way to do that is start a new shell and run this command: `echo $$ | sudo tess /sys/fs/cgroup/altgw/cgroup.proc`
+            - Now any program you run from that shell will utilize the new alternative gateway, as they will inherit the route of the shell. (Although not if you run them via sudo, which will break the inheritance.)
+
     
 ## Requirements
 - Your container needs the NET_ADMIN capability, e.g. `--cap-add=NET_ADMIN`
