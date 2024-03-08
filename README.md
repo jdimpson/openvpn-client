@@ -27,7 +27,8 @@ There are other examples in the [example-run](example-run) folder.
     - Set environmental varable `LOCALSUBNET` to the LAN subnet where you container host is running, so that the proxy can talk to other devices on your local LAN, e.g. `-e LOCALSUBNET=192.168.68.0/24`
     - Then on any device on your local LAN, set the appropriate `https_proxy` environment variable or web browser proxy setting to `http://<your docker host name or IP>:8888/` (or whatever port you mapped to 8888 of the container)
     - e.g. `http_proxy=http://<docker host name or ip>:8888/ curl http://ipinfo.io/`
-    - See [http_proxy.sh-example](example-run/http_proxy.sh-example) as an example of how to set environment variables to use the proxy.
+    - See [http_proxy.sh-example](example-run/http_proxy.sh-example) as an example of how to set environment variables to use the proxy (and thus the VPN).
+    - See [ssh_config-example](example-run/ssh_config-example) as an example of how to set up an SSH client to use the proxy (and thus the VPN)
 - Use as a routable gateway for other containers 
     - Make sure you give your running OpenVPN client container instance a name, e.g. `--name=openvpn`
     - Then start another container, using `--network=container:openvpn` to connect their network namespaces together. The secondary container(s) will use the routing table of the `openvpn` container, as managed by OpenVPN client.
@@ -41,7 +42,7 @@ There are other examples in the [example-run](example-run) folder.
         - See [run-host.sh](examples-run/run-host.sh) for how to cause your docker host to have its default route changed so that all traffic goes over the VPN
             - (almost certainly not what you want if there are many users and/or many different services on your docker host, but useful if your docker host is intended to only be a router or some other other kind of network appliance)
         - See [run-macvlan.sh](examples-run/run-macvlan.sh) for how to make your Openvpn-client container have it's own IP address on your local network, suitable to treat as a router. Trivially easy to convert to use layer 2 ipvlan rather than macvlan.
-    - And once you container has become a valid router on your network, you have to point other systems at is as a route. 
+    - And once your container has become a valid router on your network, you have to point other systems at it so it can route for them. 
         - You can manually change their default gateway or add new static route(s) 
         - or on Linux systems, you can create an alternate gateway routing table that will only be applied to selected process. 
             - Run [altgw-setup.sh-example](example-run/altgw-setup.sh-example), then
