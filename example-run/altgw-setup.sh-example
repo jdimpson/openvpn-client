@@ -14,16 +14,40 @@ GROUP=$(id -g -n $USER)
 ALTGWIP=192.168.1.5
 
 
+# create the cgroup for the alternate routing table
 sudo mkdir -p /sys/fs/cgroup/$TABLE
 sudo chown -R $USER:$GROUP /sys/fs/cgroup/$TABLE
+
+# make a name for for the alternate routing table (this is the only part of this script that is persistant, although we overwrite it each time)
 echo "$FWMARK $TABLE" | sudo tee /etc/iproute2/rt_tables.d/$TABLE-route.conf > /dev/null
+
+# associate the route table to a firewall mark
 sudo ip rule add fwmark $FWMARK table $TABLE
+
+# add the alternate router's IP address as the default route in the new table
 sudo ip route add default via $ALTGWIP dev $DEV table $TABLE
+
+# disable reverse path filtering
 echo 2 | sudo tee /proc/sys/net/ipv4/conf/all/rp_filter > /dev/null;
 echo 2 | sudo tee /proc/sys/net/ipv4/conf/$DEV/rp_filter > /dev/null;
+
+# any packets associated with the cgroup shuold be marked with the firewall mark.
 sudo iptables -t mangle -A OUTPUT -m cgroup --path $TABLE -j MARK --set-mark $FWMARK;
+# and IP masqueraded
 sudo iptables -t nat -A POSTROUTING -m cgroup --path $TABLE -o $DEV -j MASQUERADE;
+
+# show the new table
 ip route show table $TABLE;
+
+# run atraceroute before using the new table
 traceroute -n 8.8.8.8
+
+# convert this process to use the new table
 echo $$ | sudo tee /sys/fs/cgroup/$TABLE/cgroup.procs 
+
+# see how the traceroute changes because the new table is used by this process (and its children)
 traceroute -n 8.8.8.8
+
+echo "Now add the process ID of any program to /sys/fs/cgroup/$TABLE/cgroup.procs to cause it to use the new routing table."
+echo "The easiest way to do this is to create a new shell process, add it to the cgroup file, the run any other commands from that shell: they will inherit the new routing table."
+echo "    e.g. echo \$\$ | sudo tee /sys/fs/cgroup/$TABLE/cgroup.procs ";
