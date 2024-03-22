@@ -24,15 +24,16 @@ fi
 GW=$(ip route | sed -ne '/default/{s/default via \([^ ][^ ]* dev [^ ]*\).*/\1/; p}');
 
 ROUTING=
+echo;
 if test -z "$LOCALSUBNET"; then
 	echo "You should set LOCALSUBNET if you want to connect to the proxy or enable NAT routing";
 else
 	echo "LOCALSUBNET is $LOCALSUBNET via $GW";
 	if ip route add $LOCALSUBNET via $GW; then
-		echo "You can connect to dockerhost:8888 for HTTP_PROXY access (or whichever port you forwarded)" >&2;
+		echo "You can connect to dockerhost:8888 for HTTPS_PROXY access (or whichever port you forwarded)"; 
 	else
 		ROUTING=1;
-		echo "Detected that we are bridged to local subnet. Enabling NAT routing for $LOCALSUBNET" >&2;
+		echo "Detected that we are bridged to local subnet. Enabling NAT routing for $LOCALSUBNET";
 		# NOTE: for this to work the container needs to be bridged to the physical network, e.g. via macvlan.
 		iptables -A FORWARD -i $ETH0 -o $TUN0 -m state --state RELATED,ESTABLISHED -j ACCEPT
 		iptables -A FORWARD -i $TUN0 -o $ETH0 -m state --state RELATED,ESTABLISHED -j ACCEPT
@@ -61,26 +62,32 @@ if ! test -r "$OVERRIDES"; then
 fi
 
 if ! test -z "$RATE"; then
-	( sleep 10; echo "Setting up rate limit using rate $RATE" >&2; /tc.sh "$RATE"; ) &
+	( sleep 10; echo; echo "Setting up rate limit using rate $RATE"; /tc.sh "$RATE"; ) &
+else
+	echo;
+	echo "No rate-limiting in effect";
 fi
 
+echo;
 if test -x /usr/bin/tinyproxy; then
-	echo "Running tinyproxy" >&2;
+	echo "Running tinyproxy";
 	tinyproxy -d &
 else
-	echo "Tinyproxy not installed, skipping" >&2;
+	echo "Tinyproxy not installed, skipping";
 fi
 
 # https://api.myip.com/
 # https://ipinfo.io
-( sleep 30; while true; do \
+( sleep 20; while true; do \
+	echo; \
 	date; \
 	IP=$(ip addr show $ETH0 | awk '/inet / {print $2}' | sed -e 's#/.*##'); \
-	test -z "$ROUTING" || echo "export https_proxy=$IP:8888 for proxy access and use $IP as a routed gateway."; \
+	test -z "$ROUTING" || echo "export https_proxy=http://$IP:8888/ for proxy access and use $IP as a routed gateway."; \
 	test -z "$ROUTING" && echo "Forward a port from container host to $IP:8888 for proxy access."; \
 	wget -q https://ipinfo.io/ -O- ; echo; \
 	sleep 3600; done ) &
 
+echo "Starting up openvpn in client mode";
 exec openvpn --config "$CLIENT" --config "$OVERRIDES";
 
 # failed exec
