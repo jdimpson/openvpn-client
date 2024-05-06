@@ -16,15 +16,19 @@ ETH="eth0";
 MACVLAN="macvlan0";
 RANGE="192.168.1.200/30";
 GW="192.168.1.1";
+VPNIP="192.168.1.200"
+
 echo "WARNING: This will create new docker macvlan network called $MACVLAN attached to $ETH with addresses in the range $RANGE using $GW as the gateway. It will delete the network after the docker run command exists, unless the script is killed with prejudice.";
 
 docker network create -d macvlan -o parent=$ETH --subnet $LOCALSUBNET --gateway $GW --ip-range $RANGE $MACVLAN
 trap  "docker network rm $MACVLAN" EXIT;
 
+echo "Use IP address $VPNIP as gateway/route for the VPN link";
 docker run -it --rm \
 	--name="$NAME" \
 	--cap-add=NET_ADMIN \
-	--net=macvlan0 \
+	--net=$MACVLAN \
+	--ip=$VPNIP \
 	--device=/dev/net/tun:/dev/net/tun \
 	--mount type=bind,source="$(pwd)/",target="/etc/openvpn/" \
 	-e OVPNCLIENT="$OVPNCLIENT" \
