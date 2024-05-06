@@ -39,9 +39,9 @@ There are other examples in the [example-run](example-run) folder.
 - Use as a routable gateway for devices on your LAN!!!1
     - So you could set it as a route (default or otherwise) for other physical devices on your LAN and use your VPNs in the manner they are generally intended for.
     - Two ways:
-        - See [run-host.sh](examples-run/run-host.sh) for how to cause your docker host to have its default route changed so that all traffic goes over the VPN
+        - See [run-host.sh](example-run/run-host.sh) for how to cause your docker host to have its default route changed so that all traffic goes over the VPN
             - (almost certainly not what you want if there are many users and/or many different services on your docker host, but useful if your docker host is intended to only be a router or some other other kind of network appliance)
-        - See [run-macvlan.sh](examples-run/run-macvlan.sh) for how to make your Openvpn-client container have it's own IP address on your local network, suitable to treat as a router. Trivially easy to convert to use layer 2 ipvlan rather than macvlan.
+        - See [run-macvlan.sh](example-run/run-macvlan.sh) for how to make your Openvpn-client container have it's own IP address on your local network, suitable to treat as a router. Trivially easy to convert to use layer 2 ipvlan rather than macvlan.
     - And once your container has become a valid router on your network, you have to point other systems at it so it can route for them. 
         - You can manually change their default gateway or add new static route(s) 
         - or on Linux systems, you can create an alternate gateway routing table that will only be applied to selected process. 
