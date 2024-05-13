@@ -18,7 +18,7 @@ if ip link add dummy0 type dummy; then
 	ip link delete dummy0;
 else
 	echo "Make sure you give this container NET_ADMIN capability" >&2;
-	exit 4;
+	exit 5;
 fi
 
 GW=$(ip route | sed -ne '/default/{s/default via \([^ ][^ ]* dev [^ ]*\).*/\1/; p}');
@@ -87,6 +87,8 @@ fi
 	wget -q https://ipinfo.io/ -O- ; echo; \
 	sleep 3600; done ) &
 
+echo "Changing directory to /etc/openvpn";
+cd /etc/openvpn || exit 6;
 echo "Starting up openvpn in client mode";
 exec openvpn --config "$CLIENT" --config "$OVERRIDES";
 
