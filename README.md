@@ -21,7 +21,7 @@ There are other examples in the [example-run](example-run) folder.
     - But if your OpenVPN client config consists of more than a single file, you should do something like this: `--mount type=bind,source="$(pwd)/",target="/etc/openvpn/"`
     - And either make sure your client config file is called `/etc/openvpn/client.ovpn`
     - Or set environment variable `OVPNCLIENT` to whatever file you is your client config, e.g. `-e OVPNCLIENT=/etc/openvpn/my_config.ovpn`
-    - See [run.sh](example-run/run.sh) as an example of basic usage.
+    - See [run.sh](example-run/run.sh) as an example of basic usage-- by default it requires a config file called `myclient.ovpn`.
 - [tinyproxy](http://tinyproxy.github.io/) HTTP proxy
     - Listening on internal port 8888, mappable to any port on the container host, e.g. `-p 9999:8888/tcp`
     - Set environmental varable `LOCALSUBNET` to the LAN subnet where you container host is running, so that the proxy can talk to other devices on your local LAN, e.g. `-e LOCALSUBNET=192.168.68.0/24`
@@ -32,7 +32,8 @@ There are other examples in the [example-run](example-run) folder.
 - Use as a routable gateway for other containers 
     - Make sure you give your running OpenVPN client container instance a name, e.g. `--name=openvpn`
     - Then start another container, using `--network=container:openvpn` to connect their network namespaces together. The secondary container(s) will use the routing table of the `openvpn` container, as managed by OpenVPN client.
-    - Or `network_mode=service:openvpn` or `network_mode=container:openvpn` if you are using docker compose.
+    - See [curl-container-network.sh](example-run/curl-container-network.sh) as an example of how to cause other containers to use the network created by the openvpn-client container.
+    - Similarly, use `network_mode=service:openvpn` or `network_mode=container:openvpn` if you are using docker compose.
 - Provide VPNed command line webclients
     - Connect into the running container to run `wget`, `curl`, `tcpdump`, or `speedtest-cli`
     - e.g. on your docker host, run `docker exec -it openvpn curl https://ipinfo.io/`
