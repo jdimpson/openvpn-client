@@ -27,7 +27,17 @@ sudo ip rule add fwmark $FWMARK table $TABLE
 # add the alternate router's IP address as the default route in the new table
 sudo ip route add default via $ALTGWIP dev $DEV table $TABLE
 
-# disable reverse path filtering
+# configure "loose" reverse path filtering. I think this is needed because 
+# packets are received and evaluated for RPF before being fwmarked, and 
+# fwmarking is what moves the packet into the context of the altgw routing 
+# table. So strict RPF might block a packet when evaluated against only the 
+# default routing table, but apparantly loose mode expands to check against 
+# all routing tables. I'm not completely happy with this explanation, because
+# normally Loose RPF mode is explained as checking against reachability via 
+# any network interface. It makes sense that the technical specifics for 
+# loose mode opens the validation aperture to all network interface / routing 
+# table combinations, but I don't know if that's true.
+# see https://en.wikipedia.org/wiki/Reverse-path_forwarding#Loose_mode
 echo 2 | sudo tee /proc/sys/net/ipv4/conf/all/rp_filter > /dev/null;
 echo 2 | sudo tee /proc/sys/net/ipv4/conf/$DEV/rp_filter > /dev/null;
 
