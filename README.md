@@ -48,7 +48,7 @@ There are other examples in the [example-run](example-run) folder.
         - or on Linux systems, you can create an alternate gateway routing table that will only be applied to selected process. 
             - Run [altgw-setup.sh-example](example-run/altgw-setup.sh-example), then
             - Write the process ID of the program to `/sys/fs/cgroup/altgw/cgroup.procs` 
-            - The easiest way to do that is start a new shell and run this command: `echo $$ | sudo tess /sys/fs/cgroup/altgw/cgroup.proc`
+            - The easiest way to do that is start a new shell and run this command: `echo $$ | sudo tee /sys/fs/cgroup/altgw/cgroup.proc`
             - Now any program you run from that shell will utilize the new alternative gateway, as they will inherit the route of the shell. (Although not if you run them via sudo, which will break the inheritance.)
 - Perform rate limiting.
     - Set the environment variable RATE in your docker run / docker compose command to establish a rate limit applied to both incoming and outgoing data.
