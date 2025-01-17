@@ -7,12 +7,28 @@ if ! mount | grep -q 'type cgroup2'; then
 	exit 1;
 fi
 
-DEV=ens18
 FWMARK=11;
 TABLE="altgw";
 GROUP=$(id -g -n $USER)
-ALTGWIP=192.168.1.5
+DEV="$1";
+ALTGWIP="$2";
+# DEV=ens18
+# ALTGWIP=192.168.1.5
 
+
+usage() {
+	echo "$0: <dev> <alt gw IP> [FW mark ID]" >&2;
+	echo "where:" >&2;
+	echo "	<dev> is the network device used to reach the Alternate Gateway IP" >&2;
+	echo "	<alt gw IP> is the Alternate Gateway IP address" >&2;
+	echo "	[FW mark ID] is an optional value to use as the Firewall Mark ID (default is $FWMARK)" >&2;
+	echo "Creates an alternate routing table that can be attached to individual processes." >&2;
+}
+
+if test -z "$ALTGWIP" || test -z "$DEV"; then
+	usage;
+	exit 2;
+fi
 
 # create the cgroup for the alternate routing table
 sudo mkdir -p /sys/fs/cgroup/$TABLE
@@ -58,6 +74,11 @@ echo $$ | sudo tee /sys/fs/cgroup/$TABLE/cgroup.procs
 # see how the traceroute changes because the new table is used by this process (and its children)
 traceroute -n 8.8.8.8
 
+echo
+echo
 echo "Now add the process ID of any program to /sys/fs/cgroup/$TABLE/cgroup.procs to cause it to use the new routing table."
 echo "The easiest way to do this is to create a new shell process, add it to the cgroup file, the run any other commands from that shell: they will inherit the new routing table."
 echo "    e.g. echo \$\$ | sudo tee /sys/fs/cgroup/$TABLE/cgroup.procs ";
+echo "Look at the table wit this command:";
+echo "	ip route list table $TABLE";
+echo "Similarly, append 'table altgw' to other ip route commands, e.g. ip route add ... table altgw";
