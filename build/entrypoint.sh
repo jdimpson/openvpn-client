@@ -89,7 +89,7 @@ fi
 
 echo "Changing directory to /etc/openvpn";
 cd /etc/openvpn || exit 6;
-echo "Starting up openvpn in client mode";
+echo "Starting up openvpn in client mode using configs $CLIENT and $OVERRIDES";
 exec openvpn --config "$CLIENT" --config "$OVERRIDES";
 
 # failed exec
