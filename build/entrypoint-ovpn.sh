@@ -78,13 +78,22 @@ fi
 
 # https://api.myip.com/
 # https://ipinfo.io
+# https://am.i.mullvad.net/json
+if test -z "$IPINFOAPI"; then
+	IPINFOAPI=https://ipinfo.io/
+fi
+if which jq; then
+	JQ=jq;
+else
+	JQ=cat;
+fi
 ( sleep 20; while true; do \
 	echo; \
 	date; \
 	IP=$(ip addr show $ETH0 | awk '/inet / {print $2}' | sed -e 's#/.*##'); \
 	test -z "$ROUTING" || echo "export https_proxy=http://$IP:8888/ for proxy access and use $IP as a routed gateway."; \
 	test -z "$ROUTING" && echo "Forward a port from container host to $IP:8888 for proxy access."; \
-	wget -q https://ipinfo.io/ -O- ; echo; \
+	wget -q "$IPINFOAPI" -O- | $JQ ; echo; \
 	sleep 3600; done ) &
 
 echo "Changing directory to /etc/openvpn";
