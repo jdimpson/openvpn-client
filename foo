@@ -1,0 +1,8 @@
+#!/bin/sh
+
+F="example-run/myclient.ovpn"
+git filter-branch --force --index-filter \
+  "git rm --cached --ignore-unmatch $F" \
+  --prune-empty --tag-name-filter cat -- --all && \
+  git push --force --verbose --dry-run && \
+  git push --force
